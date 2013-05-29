@@ -22,9 +22,10 @@ class DirectionController < UIViewController
     
     if @waypoints.count > 1
       sensor = "false"
-      parameters = [ sensor, @waypointStrings, nil ]
-      keys = ["sensor", "waypoints", nil];
+      parameters = [ sensor, @waypointStrings ]
+      keys = ["sensor", "waypoints"];
       query = NSDictionary.dictionaryWithObjects( parameters, forKeys:keys )
+
       ds = DirectionService.alloc.init 
       
       ds.setDirectionsQuery( query, withSelector:'addDirections:', withDelegate:self );
@@ -32,7 +33,6 @@ class DirectionController < UIViewController
   end
 
   def addDirections( json )
-
     routes = json[:routes][0];
     
     route = routes[:overview_polyline]
@@ -40,10 +40,6 @@ class DirectionController < UIViewController
     path = GMSPath.pathFromEncodedPath( overview_route )
     polyline = GMSPolyline.polylineWithPath( path )
     polyline.map = @mapView;
-  end
-
-  def viewDidLoad
-     # super.viewDidLoad
   end
 
 end

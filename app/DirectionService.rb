@@ -1,61 +1,53 @@
-
 class DirectionService
   def initialize
 
-    @_sensor
-    @_alternatives
-    @_directionsURL
-    @_waypoints
-
     @directionsUrl = "http://maps.googleapis.com/maps/api/directions/json?"
-
-    puts @directionsUrl
   end
 
   def setDirectionsQuery( query, withSelector: selector, withDelegate: delegate )
-    waypoints = query.objectForKey("waypoints");
-    origin = waypoints.objectAtIndex( 0 );
+    
+    waypoints = query[:waypoints];
+    origin = waypoints[ 0 ]
     waypointCount = waypoints.count;
     destinationPos = waypointCount - 1;
-    destination = waypoints.objectAtIndex( destinationPos )
-    sensor = query.objectForKey("sensor")
+    destination = waypoints[ destinationPos ]
+    sensor = query[:sensor]
     url = "#{@directionsUrl}&origin=#{origin}&destination=#{destination}&sensor=#{sensor}"
     
     if waypointCount > 2
       url.appendString("&waypoints=optimize:true")
       
-      wpCount = waypointCount - 2
+      wpCount = waypointCount - 1
       
-      for i in 1..wpCount
+      for i in 0..wpCount
         url.appendString( "|" )
-        url.appendString( waypoints.objectAtIndex[i] )
+        url.appendString( waypoints[i] )
       end
     end
     
     url = url.stringByAddingPercentEscapesUsingEncoding( NSASCIIStringEncoding )
 
     @directionsUrl = NSURL.URLWithString( url )
-    
+
     self.retrieveDirections( selector, withDelegate:delegate )
   end
 
   def retrieveDirections( selector, withDelegate: delegate )
-    @url = @directionsUrl
+    # queue = Dispatch::Queue.concurrent('com.company.app.task')
+    # queue.async do
+    #   data = NSData.dataWithContentsOfURL( @directionsUrl  )
+    #   puts data
+    # end
 
-    BW::HTTP.get( @directionsUrl ) do |response|
-     p response
-      data = NSData.dataWithContentsOfURL( @url  )
-      puts data 
-
-      #self.fetchedData( data, withSelector:selector, withDelegate:delegate )
-    end
+    data = NSData.dataWithContentsOfURL( @directionsUrl  )
+    self.fetchedData( data, withSelector:selector, withDelegate:delegate )
+    
   end
 
 
   def fetchedData( data, withSelector: selector, withDelegate: delegate )
-  
     error_ptr = Pointer.new(:object)
-    json = NSJSONSerialization.JSONObjectWithData( data, options: kNilOptions, error: error_ptr )
+    json = BW::JSON.parse( data )
     delegate.performSelector( selector, withObject: json )
   end
 end
